@@ -13,6 +13,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import jakarta.validation.ConstraintViolation;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -64,4 +69,22 @@ class ReservationServiceTest {
                 () -> reservationService.createReservation(dto, "testuser")
         );
     }
+
+    @Test
+        void reservationRequestDTO_shouldFail_whenDateIsInThePast() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+
+        ReservationRequestDTO dto = new ReservationRequestDTO(
+                1L,
+                LocalDateTime.now().minusDays(1),
+                2
+        );
+
+        Set<ConstraintViolation<ReservationRequestDTO>> violations = validator.validate(dto);
+
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream()
+                .anyMatch(v -> v.getMessage().equals("La reserva debe ser en una fecha futura")));
+        }
 }
